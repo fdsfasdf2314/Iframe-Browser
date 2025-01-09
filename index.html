@@ -23,8 +23,9 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1);
             z-index: 10;
             display: flex;
-            justify-content: center;
             align-items: center;
+            margin-left: 10px;
+            margin-right: 10px;
         }
         iframe {
             flex: 1;
@@ -37,7 +38,7 @@
             border: 2px solid #ccc;
             border-radius: 5px;
             overflow: hidden;
-            width: 50%;
+            width: 40%;
             font-size: 20px;
         }
         #prefix, input {
@@ -65,18 +66,70 @@
         button:active {
             background-color: #fafafa;
         }
+        .tabs {
+            display: flex;
+            font-size: 20px;
+            font-family: Arial, sans-serif;
+            align-items: center;
+        }
+        .tab {
+            display: flex;
+            align-items: center;
+            padding: 4px 10px;
+            cursor: pointer;
+            background-color: #ebebeb;
+            border: 1px solid lightgrey;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+        .tab.active {
+            background-color: #fff;
+            border-bottom: 2px solid green;
+        }
+        .tab button {
+            margin-left: 10px;
+            padding: 2px 5px;
+            background-color: #ff6961;
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        #addTabButton {
+            padding: 4px 10px;
+            cursor: pointer;
+            background-color: #ebebeb;
+            border: 1px solid lightgrey;
+            border-radius: 5px;
+            margin-left: 10px;
+        }
+        #closeTabButton {
+            padding: 0px 4px;
+            background-color: #e0e0e0;
+            border-radius: 5px;
+        }
     </style>
 </head>
 <body>
     <div id="container">
+        &emsp;
         <div class="search-bar">
             <span id="prefix">https://</span>
             <input type="text" id="urlInput" placeholder="Enter URL here..." onkeypress="handleKeyPress(event)">
             <button onclick="loadIframe()">➜</button>
         </div>
+        <div class="tabs" id="tabsContainer">
+            <div class="tab active" id="tab1" onclick="switchTab(1)">
+                Tab 1
+                <button id="closeTabButton" onclick="closeTab(1, event)">×</button>
+            </div>
+        </div>
+        <button id="addTabButton" onclick="addTab()">+</button>
     </div>
-    <iframe id="previewIframe" allowfullscreen></iframe>
+    <iframe id="previewIframe1" class="iframe-tab" allowfullscreen></iframe>
     <script>
+        let tabCount = 1;
+        const maxTabs = 5;
+
         function handleKeyPress(event) {
             if (event.key === 'Enter') {
                 loadIframe();
@@ -88,7 +141,57 @@
             if (!url.startsWith('https://')) {
                 url = 'https://' + url;
             }
-            document.getElementById('previewIframe').src = url;
+            const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
+            activeIframe.src = url;
+        }
+
+        function switchTab(tabNumber) {
+            const tabs = document.querySelectorAll('.tab');
+            tabs.forEach((tab, index) => {
+                tab.classList.toggle('active', index === (tabNumber - 1));
+            });
+            const iframes = document.querySelectorAll('.iframe-tab');
+            iframes.forEach((iframe, index) => {
+                iframe.style.display = (index === (tabNumber - 1)) ? 'block' : 'none';
+            });
+        }
+
+        function addTab() {
+            if (tabCount >= maxTabs) {
+                alert('Maximum of 5 tabs allowed.');
+                return;
+            }
+            tabCount++;
+            const tabsContainer = document.getElementById('tabsContainer');
+            const newTab = document.createElement('div');
+            newTab.className = 'tab';
+            newTab.id = `tab${tabCount}`;
+            newTab.innerHTML = `Tab ${tabCount} <button id="closeTabButton" onclick="closeTab(${tabCount}, event)">×</button>`;
+            newTab.setAttribute('onclick', `switchTab(${tabCount})`);
+            tabsContainer.appendChild(newTab);
+
+            const newIframe = document.createElement('iframe');
+            newIframe.id = `previewIframe${tabCount}`;
+            newIframe.className = 'iframe-tab';
+            newIframe.style.display = 'none';
+            newIframe.setAttribute('allowfullscreen', '');
+            document.body.appendChild(newIframe);
+        }
+
+        function closeTab(tabNumber, event) {
+            event.stopPropagation();
+            if (tabCount <= 1) return;
+
+            document.getElementById(`tab${tabNumber}`).remove();
+            document.getElementById(`previewIframe${tabNumber}`).remove();
+
+            if (document.querySelectorAll('.tab.active').length === 0 && tabCount > 1) {
+                const lastTab = document.querySelectorAll('.tab')[tabCount - 2];
+                lastTab.classList.add('active');
+                document.getElementById(`previewIframe${tabCount - 1}`).style.display = 'block';
+            }
+
+            tabCount--;
         }
     </script>
 </body>
