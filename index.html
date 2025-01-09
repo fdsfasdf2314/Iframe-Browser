@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Iframe Browser</title>
+    <title>iFrame Browser</title>
     <style>
         body, html {
             margin: 0;
@@ -12,35 +12,68 @@
             height: 100%;
             overflow: hidden;
             display: flex;
-            justify-content: center;
+            flex-direction: column;
             align-items: center;
             background-color: #f0f0f0;
         }
         #container {
+            width: 100%;
+            padding: 10px;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            z-index: 10;
             display: flex;
-            flex-direction: column;
+            justify-content: center;
             align-items: center;
         }
         iframe {
-            display: none;
-            position: absolute;
-            top: 0;
-            left: 0;
+            flex: 1;
             width: 100%;
-            height: 100%;
             border: none;
         }
-        input, button {
+        .search-bar {
+            display: flex;
+            align-items: center;
+            border: 2px solid #ccc;
+            border-radius: 5px;
+            overflow: hidden;
+            width: 50%;
+            font-size: 20px;
+        }
+        #prefix, input {
             padding: 10px;
-            margin: 5px;
             font-size: 16px;
+            font-family: Arial, sans-serif;
+            border: none;
+            outline: none;
+            background-color: #ebebeb;
+            color: black;
+        }
+        input {
+            flex: 1;
+            background-color: white;
+        }
+        button {
+            padding: 10px 15px;
+            font-size: 16px;
+            border: none;
+            outline: none;
+            background-color: #ebebeb;
+            color: black;
+            cursor: pointer;
+        }
+        button:active {
+            background-color: #fafafa;
         }
     </style>
 </head>
 <body>
     <div id="container">
-        <input type="text" id="urlInput" placeholder="Enter URL here" onkeypress="handleKeyPress(event)">
-        <button onclick="loadIframe()">Preview</button>
+        <div class="search-bar">
+            <span id="prefix">https://</span>
+            <input type="text" id="urlInput" placeholder="Enter URL here..." onkeypress="handleKeyPress(event)">
+            <button onclick="loadIframe()">➜</button>
+        </div>
     </div>
     <iframe id="previewIframe" allowfullscreen></iframe>
     <script>
@@ -55,11 +88,7 @@
             if (!url.startsWith('https://')) {
                 url = 'https://' + url;
             }
-            const iframe = document.getElementById('previewIframe');
-            iframe.src = url;
-            iframe.style.display = 'block';
-            iframe.requestFullscreen();
-            document.getElementById('container').style.display = 'none';
+            document.getElementById('previewIframe').src = url;
         }
     </script>
 </body>
