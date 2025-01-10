@@ -147,6 +147,15 @@
             activeIframe.src = url;
         }
 
+        function loadIframeFromUrl(url) {
+            let url = urlParam;
+            if (!url.startsWith('https://')) {
+                url = 'https://' + url;
+            }
+            const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
+            activeIframe.src = url;
+        }
+
         function switchTab(tabNumber) {
             const tabs = document.querySelectorAll('.tab');
             tabs.forEach((tab, index) => {
