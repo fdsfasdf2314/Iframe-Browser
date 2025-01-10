@@ -10,6 +10,5 @@ var urlParam = urlParams.get('url');
 
 
 // Load the iFrame
-alert(urlParam);
 urlInput.textContent = urlParam;
 loadIframeFromUrl(urlParam);
