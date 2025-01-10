@@ -12,4 +12,4 @@ var urlParam = urlParams.get('url');
 // Load the iFrame
 alert(urlParam);
 urlInput.textContent = urlParam;
-loadIframe();
+loadIframeFromUrl(urlParam);
