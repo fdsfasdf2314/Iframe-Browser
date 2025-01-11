@@ -117,7 +117,7 @@
             <span id="prefix">https://</span>
             <input type="text" id="urlInput" placeholder="Enter URL here..." onkeypress="handleKeyPress(event)">
             <button onclick="loadIframe()">➜</button>
-            <button onclick="loadIframe()">↻</button>
+            <button onclick="reloadIframe()">↻</button>
         </div>
         <div class="tabs" id="tabsContainer">
             <div class="tab active" id="tab1" onclick="switchTab(1)">
@@ -145,6 +145,15 @@
             }
             const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
             activeIframe.src = url;
+        }
+
+        function reloadIframe() {
+            const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
+            currentUrl = activeIframe.src;
+            if (!currentUrl.startsWith('https://')) {
+                currentUrl= 'https://' + currentUrl;
+            }
+            activeIframe.src = currentUrl;
         }
 
         /*
