@@ -108,6 +108,9 @@
             background-color: #e0e0e0;
             border-radius: 5px;
         }
+        #runButton {
+            font-weight: 1;
+        }
     </style>
 </head>
 <body>
@@ -116,8 +119,8 @@
         <div class="search-bar">
             <span id="prefix">https://</span>
             <input type="text" id="urlInput" placeholder="Enter URL here..." onkeypress="handleKeyPress(event)">
-            <button onclick="loadIframe()">➜</button>
-            <button onclick="reloadIframe()">↻</button>
+            <button onclick="loadIframe()" id="goButton">→</button>
+            <button onclick="reloadIframe()" id="reloadButton">↻</button>
         </div>
         <div class="tabs" id="tabsContainer">
             <div class="tab active" id="tab1" onclick="switchTab(1)">
