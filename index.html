@@ -3,237 +3,541 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>iFrame Browser</title>
-    <!-- <script>
-// Get the current URL's query string (everything after '?')
-const queryString = window.location.search;
-const urlInput = document.getElementById("urlInput");
-
-// Create a URLSearchParams object from the query string
-const urlParams = new URLSearchParams(queryString);
-
-// Access specific query parameters by name
-var urlParam = urlParams.get('url');
-
-
-// Load the iFrame
-urlInput.textContent = urlParam;
-loadIframeFromUrl(urlParam);
-
-</script> -->
+    <title>Iframe Browser with Tabs</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#5D5CDE'
+                    }
+                }
+            }
+        }
+    </script>
     <style>
-        body, html {
-            margin: 0;
-            padding: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            background-color: #f0f0f0;
+        .loading-spinner {
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #5D5CDE;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            animation: spin 1s linear infinite;
         }
-        #container {
-            width: 100%;
-            padding: 10px;
-            background-color: #fff;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            margin-left: 10px;
-            margin-right: 10px;
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
-        iframe {
-            flex: 1;
-            width: 100%;
-            border: none;
+        
+        .browser-frame {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
         }
-        .search-bar {
-            display: flex;
-            align-items: center;
-            border: 2px solid #ccc;
-            border-radius: 5px;
-            overflow: hidden;
-            width: 40%;
-            font-size: 20px;
+        
+        .dark .browser-frame {
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.3);
         }
-        #prefix, input {
-            padding: 10px;
-            font-size: 16px;
-            font-family: Arial, sans-serif;
-            border: none;
-            outline: none;
-            background-color: #ebebeb;
-            color: black;
-        }
-        input {
-            flex: 1;
-            background-color: white;
-        }
-        button {
-            padding: 10px 15px;
-            font-size: 16px;
-            border: none;
-            outline: none;
-            background-color: #ebebeb;
-            color: black;
-            cursor: pointer;
-        }
-        button:active {
-            background-color: #fafafa;
-        }
-        .tabs {
-            display: flex;
-            font-size: 20px;
-            font-family: Arial, sans-serif;
-            align-items: center;
-        }
+
         .tab {
-            display: flex;
-            align-items: center;
-            padding: 4px 10px;
-            cursor: pointer;
-            background-color: #ebebeb;
-            border: 1px solid lightgrey;
-            border-radius: 5px;
-            margin-left: 10px;
+            transition: all 0.2s ease;
         }
+
+        .tab:hover {
+            background-color: rgba(0, 0, 0, 0.05);
+        }
+
+        .dark .tab:hover {
+            background-color: rgba(255, 255, 255, 0.05);
+        }
+
         .tab.active {
-            background-color: #fff;
-            border-bottom: 2px solid green;
+            background-color: white;
+            border-bottom: 2px solid #5D5CDE;
         }
-        .tab button {
-            margin-left: 10px;
-            padding: 2px 5px;
-            background-color: #ff6961;
-            color: white;
-            border: none;
-            cursor: pointer;
+
+        .dark .tab.active {
+            background-color: #374151;
+            border-bottom: 2px solid #5D5CDE;
         }
-        #addTabButton {
-            padding: 4px 10px;
-            cursor: pointer;
-            background-color: #ebebeb;
-            border: 1px solid lightgrey;
-            border-radius: 5px;
-            margin-left: 10px;
+
+        .tab-close {
+            opacity: 0;
+            transition: opacity 0.2s ease;
         }
-        #closeTabButton {
-            padding: 0px 4px;
-            background-color: #e0e0e0;
-            border-radius: 5px;
-        }
-        #runButton {
-            font-weight: 1;
+
+        .tab:hover .tab-close {
+            opacity: 1;
         }
     </style>
 </head>
-<body>
-    <div id="container">
-        &emsp;
-        <div class="search-bar">
-            <span id="prefix">https://</span>
-            <input type="text" id="urlInput" placeholder="Enter URL here..." onkeypress="handleKeyPress(event)">
-            <button onclick="loadIframe()" id="goButton">→</button>
-            <button onclick="reloadIframe()" id="reloadButton">↻</button>
-        </div>
-        <div class="tabs" id="tabsContainer">
-            <div class="tab active" id="tab1" onclick="switchTab(1)">
-                Tab 1
-                <button id="closeTabButton" onclick="closeTab(1, event)">×</button>
+<body class="bg-gray-100 dark:bg-gray-900 min-h-screen transition-colors duration-300">
+    <div class="container mx-auto p-4 max-w-6xl">
+        <!-- Browser Window -->
+        <div class="bg-white dark:bg-gray-800 rounded-lg browser-frame overflow-hidden">
+            <!-- Browser Header -->
+            <div class="bg-gray-50 dark:bg-gray-700 border-b border-gray-200 dark:border-gray-600">
+                <!-- Window Controls -->
+                <div class="flex items-center justify-between p-3 pb-0">
+                    <div class="flex space-x-2">
+                        <div class="w-3 h-3 bg-red-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-yellow-500 rounded-full"></div>
+                        <div class="w-3 h-3 bg-green-500 rounded-full"></div>
+                    </div>
+                    <div class="text-sm text-gray-600 dark:text-gray-400 font-medium">
+                        Iframe Browser
+                    </div>
+                    <div class="w-12"></div>
+                </div>
+                
+                <!-- Tab Bar -->
+                <div class="flex items-end px-3 pt-2">
+                    <div id="tabContainer" class="flex space-x-1 flex-1 overflow-x-auto">
+                        <!-- Tabs will be dynamically added here -->
+                    </div>
+                    <button id="newTabBtn" class="ml-2 p-1.5 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors duration-200">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                        </svg>
+                    </button>
+                </div>
+                
+                <!-- Navigation Bar -->
+                <div class="flex items-center space-x-3 p-3 pt-2">
+                    <!-- Navigation Buttons -->
+                    <div class="flex space-x-1">
+                        <button id="backBtn" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
+                            </svg>
+                        </button>
+                        <button id="forwardBtn" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"></path>
+                            </svg>
+                        </button>
+                        <button id="refreshBtn" class="p-2 text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200 hover:bg-gray-200 dark:hover:bg-gray-600 rounded-md transition-colors duration-200">
+                            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"></path>
+                            </svg>
+                        </button>
+                    </div>
+                    
+                    <!-- Address Bar -->
+                    <div class="flex-1 relative">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <div id="loadingSpinner" class="loading-spinner hidden"></div>
+                            <svg id="secureIcon" class="w-4 h-4 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z"></path>
+                            </svg>
+                        </div>
+                        <input 
+                            type="url" 
+                            id="urlInput" 
+                            class="w-full pl-10 pr-4 py-2 text-base bg-white dark:bg-gray-600 border border-gray-300 dark:border-gray-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent text-gray-900 dark:text-white placeholder-gray-500 dark:placeholder-gray-400" 
+                            placeholder="Enter URL (e.g., https://example.com)"
+                            value=""
+                        >
+                    </div>
+                    
+                    <!-- Go Button -->
+                    <button id="goBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200">
+                        Go
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Content Area -->
+            <div class="relative bg-white dark:bg-gray-800" style="height: 70vh;">
+                <div id="tabContent" class="w-full h-full">
+                    <!-- Tab iframes will be dynamically added here -->
+                </div>
+                
+                <!-- Welcome Screen -->
+                <div id="welcomeScreen" class="flex flex-col items-center justify-center h-full text-center p-8">
+                    <div class="mb-6">
+                        <svg class="w-16 h-16 text-primary mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 01-9 9m9-9a9 9 0 00-9-9m9 9H3m9 9v-9m0-9v9"></path>
+                        </svg>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Welcome to Iframe Browser</h2>
+                        <p class="text-gray-600 dark:text-gray-400">Enter a URL in the address bar to start browsing</p>
+                    </div>
+                    <div class="text-sm text-gray-500 dark:text-gray-500">
+                        <p class="mb-2">Try these examples:</p>
+                        <div class="space-y-1">
+                            <button class="block mx-auto text-primary hover:underline example-url" data-url="https://www.wikipedia.org">https://www.wikipedia.org</button>
+                            <button class="block mx-auto text-primary hover:underline example-url" data-url="https://www.github.com">https://www.github.com</button>
+                            <button class="block mx-auto text-primary hover:underline example-url" data-url="https://www.stackoverflow.com">https://www.stackoverflow.com</button>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Error Screen -->
+                <div id="errorScreen" class="hidden flex flex-col items-center justify-center h-full text-center p-8">
+                    <div class="mb-6">
+                        <svg class="w-16 h-16 text-red-500 mx-auto mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.382 16.5c-.77.833.192 2.5 1.732 2.5z"></path>
+                        </svg>
+                        <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-2">Cannot Load Page</h2>
+                        <p class="text-gray-600 dark:text-gray-400" id="errorMessage">The page could not be loaded in an iframe.</p>
+                    </div>
+                    <button id="retryBtn" class="px-4 py-2 bg-primary text-white rounded-lg hover:bg-purple-600 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 transition-colors duration-200">
+                        Try Again
+                    </button>
+                </div>
             </div>
         </div>
-        <button id="addTabButton" onclick="addTab()">+</button>
     </div>
-    <iframe id="previewIframe1" class="iframe-tab" allowfullscreen></iframe>
+
     <script>
-        let tabCount = 1;
-        const maxTabs = 5;
+        // Dark mode support
+        if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            document.documentElement.classList.add('dark');
+        }
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', event => {
+            if (event.matches) {
+                document.documentElement.classList.add('dark');
+            } else {
+                document.documentElement.classList.remove('dark');
+            }
+        });
 
-        function handleKeyPress(event) {
-            if (event.key === 'Enter') {
-                loadIframe();
+        // Tab management
+        let tabs = [];
+        let activeTabId = null;
+        let nextTabId = 1;
+
+        class Tab {
+            constructor(url = '', title = 'New Tab') {
+                this.id = nextTabId++;
+                this.url = url;
+                this.title = title;
+                this.history = [];
+                this.historyIndex = -1;
+                this.iframe = null;
+                this.isLoading = false;
+            }
+
+            addToHistory(url) {
+                // Remove any forward history
+                this.history = this.history.slice(0, this.historyIndex + 1);
+                this.history.push(url);
+                this.historyIndex = this.history.length - 1;
+            }
+
+            canGoBack() {
+                return this.historyIndex > 0;
+            }
+
+            canGoForward() {
+                return this.historyIndex < this.history.length - 1;
+            }
+
+            goBack() {
+                if (this.canGoBack()) {
+                    this.historyIndex--;
+                    return this.history[this.historyIndex];
+                }
+                return null;
+            }
+
+            goForward() {
+                if (this.canGoForward()) {
+                    this.historyIndex++;
+                    return this.history[this.historyIndex];
+                }
+                return null;
             }
         }
 
-        function loadIframe() {
-            let url = document.getElementById('urlInput').value;
-            if (!url.startsWith('https://')) {
-                url = 'https://' + url;
-            }
-            const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
-            activeIframe.src = url;
-        }
+        // DOM elements
+        const urlInput = document.getElementById('urlInput');
+        const goBtn = document.getElementById('goBtn');
+        const backBtn = document.getElementById('backBtn');
+        const forwardBtn = document.getElementById('forwardBtn');
+        const refreshBtn = document.getElementById('refreshBtn');
+        const loadingSpinner = document.getElementById('loadingSpinner');
+        const secureIcon = document.getElementById('secureIcon');
+        const welcomeScreen = document.getElementById('welcomeScreen');
+        const errorScreen = document.getElementById('errorScreen');
+        const errorMessage = document.getElementById('errorMessage');
+        const retryBtn = document.getElementById('retryBtn');
+        const tabContainer = document.getElementById('tabContainer');
+        const tabContent = document.getElementById('tabContent');
+        const newTabBtn = document.getElementById('newTabBtn');
 
-        function reloadIframe() {
-            const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
-            currentUrl = activeIframe.src;
-            if (!currentUrl.startsWith('https://')) {
-                currentUrl= 'https://' + currentUrl;
-            }
-            activeIframe.src = currentUrl;
-        }
-
-        /*
-        function loadIframeFromUrl(url) {
-            let url = urlParam;
-            if (!url.startsWith('https://')) {
-                url = 'https://' + url;
-            }
-            const activeIframe = document.querySelector('.iframe-tab:not([style*="display: none"])');
-            activeIframe.src = url;
-        }
-        */
-
-        function switchTab(tabNumber) {
-            const tabs = document.querySelectorAll('.tab');
-            tabs.forEach((tab, index) => {
-                tab.classList.toggle('active', index === (tabNumber - 1));
+        // Initialize with first tab
+        function createNewTab(url = '', title = 'New Tab') {
+            const tab = new Tab(url, title);
+            tabs.push(tab);
+            
+            // Create tab element
+            const tabElement = document.createElement('div');
+            tabElement.className = 'tab flex items-center px-3 py-2 rounded-t-lg cursor-pointer border-b-2 border-transparent min-w-0 max-w-xs';
+            tabElement.dataset.tabId = tab.id;
+            
+            tabElement.innerHTML = `
+                <span class="text-sm text-gray-700 dark:text-gray-300 truncate flex-1 mr-2">${title}</span>
+                <button class="tab-close p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded" onclick="closeTab(${tab.id})">
+                    <svg class="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                    </svg>
+                </button>
+            `;
+            
+            tabContainer.appendChild(tabElement);
+            
+            // Create iframe
+            const iframe = document.createElement('iframe');
+            iframe.className = 'w-full h-full border-0 hidden';
+            iframe.sandbox = 'allow-same-origin allow-scripts allow-forms allow-popups';
+            iframe.dataset.tabId = tab.id;
+            
+            tabContent.appendChild(iframe);
+            tab.iframe = iframe;
+            
+            // Tab click handler
+            tabElement.addEventListener('click', (e) => {
+                if (!e.target.closest('.tab-close')) {
+                    switchToTab(tab.id);
+                }
             });
-            const iframes = document.querySelectorAll('.iframe-tab');
-            iframes.forEach((iframe, index) => {
-                iframe.style.display = (index === (tabNumber - 1)) ? 'block' : 'none';
+            
+            switchToTab(tab.id);
+            
+            if (url) {
+                loadUrl(url);
+            }
+            
+            return tab;
+        }
+
+        function switchToTab(tabId) {
+            // Update active tab
+            activeTabId = tabId;
+            const activeTab = tabs.find(t => t.id === tabId);
+            
+            if (!activeTab) return;
+            
+            // Update tab appearance
+            document.querySelectorAll('.tab').forEach(el => {
+                el.classList.remove('active');
             });
-        }
-
-        function addTab() {
-            if (tabCount >= maxTabs) {
-                alert('Maximum of 5 tabs allowed.');
-                return;
+            document.querySelector(`[data-tab-id="${tabId}"]`).classList.add('active');
+            
+            // Show/hide iframes
+            document.querySelectorAll('iframe').forEach(iframe => {
+                if (iframe.dataset.tabId == tabId) {
+                    iframe.classList.remove('hidden');
+                } else {
+                    iframe.classList.add('hidden');
+                }
+            });
+            
+            // Update URL input
+            urlInput.value = activeTab.url;
+            
+            // Update navigation buttons
+            updateNavigationButtons();
+            
+            // Hide welcome/error screens if iframe has content
+            if (activeTab.url) {
+                welcomeScreen.classList.add('hidden');
+                errorScreen.classList.add('hidden');
+            } else {
+                welcomeScreen.classList.remove('hidden');
+                errorScreen.classList.add('hidden');
             }
-            tabCount++;
-            const tabsContainer = document.getElementById('tabsContainer');
-            const newTab = document.createElement('div');
-            newTab.className = 'tab';
-            newTab.id = `tab${tabCount}`;
-            newTab.innerHTML = `Tab ${tabCount} <button id="closeTabButton" onclick="closeTab(${tabCount}, event)">×</button>`;
-            newTab.setAttribute('onclick', `switchTab(${tabCount})`);
-            tabsContainer.appendChild(newTab);
-
-            const newIframe = document.createElement('iframe');
-            newIframe.id = `previewIframe${tabCount}`;
-            newIframe.className = 'iframe-tab';
-            newIframe.style.display = 'none';
-            newIframe.setAttribute('allowfullscreen', '');
-            document.body.appendChild(newIframe);
         }
 
-        function closeTab(tabNumber, event) {
-            event.stopPropagation();
-            if (tabCount <= 1) return;
-
-            document.getElementById(`tab${tabNumber}`).remove();
-            document.getElementById(`previewIframe${tabNumber}`).remove();
-
-            if (document.querySelectorAll('.tab.active').length === 0 && tabCount > 1) {
-                const lastTab = document.querySelectorAll('.tab')[tabCount - 2];
-                lastTab.classList.add('active');
-                document.getElementById(`previewIframe${tabCount - 1}`).style.display = 'block';
+        function closeTab(tabId) {
+            const tabIndex = tabs.findIndex(t => t.id === tabId);
+            if (tabIndex === -1 || tabs.length === 1) return;
+            
+            // Remove tab from array
+            const tab = tabs[tabIndex];
+            tabs.splice(tabIndex, 1);
+            
+            // Remove DOM elements
+            document.querySelector(`[data-tab-id="${tabId}"]`).remove();
+            tab.iframe.remove();
+            
+            // Switch to another tab if this was active
+            if (activeTabId === tabId) {
+                const newActiveIndex = Math.min(tabIndex, tabs.length - 1);
+                switchToTab(tabs[newActiveIndex].id);
             }
-
-            tabCount--;
         }
+
+        function updateTabTitle(tabId, title) {
+            const tab = tabs.find(t => t.id === tabId);
+            if (tab) {
+                tab.title = title;
+                const tabElement = document.querySelector(`[data-tab-id="${tabId}"] span`);
+                if (tabElement) {
+                    tabElement.textContent = title;
+                }
+            }
+        }
+
+        function updateNavigationButtons() {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                backBtn.disabled = !activeTab.canGoBack();
+                forwardBtn.disabled = !activeTab.canGoForward();
+            }
+        }
+
+        function formatUrl(url) {
+            if (!url) return '';
+            // Check if URL already has a protocol (http, https, file, ftp, etc.)
+            if (!/^[a-zA-Z][a-zA-Z0-9+.-]*:\/\//i.test(url)) {
+                return 'https://' + url;
+            }
+            return url;
+        }
+
+        function showLoading() {
+            loadingSpinner.classList.remove('hidden');
+            secureIcon.classList.add('hidden');
+        }
+
+        function hideLoading() {
+            loadingSpinner.classList.add('hidden');
+            secureIcon.classList.remove('hidden');
+        }
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorScreen.classList.remove('hidden');
+            welcomeScreen.classList.add('hidden');
+            hideLoading();
+        }
+
+        function loadUrl(url) {
+            if (!url) return;
+            
+            const formattedUrl = formatUrl(url);
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            
+            if (!activeTab) return;
+            
+            showLoading();
+            welcomeScreen.classList.add('hidden');
+            errorScreen.classList.add('hidden');
+            
+            activeTab.url = formattedUrl;
+            activeTab.addToHistory(formattedUrl);
+            urlInput.value = formattedUrl;
+            
+            const iframe = activeTab.iframe;
+            
+            // Set up load handlers
+            const onLoad = () => {
+                hideLoading();
+                try {
+                    const title = iframe.contentDocument?.title || new URL(formattedUrl).hostname;
+                    updateTabTitle(activeTabId, title);
+                } catch (e) {
+                    updateTabTitle(activeTabId, new URL(formattedUrl).hostname);
+                }
+                updateNavigationButtons();
+                iframe.classList.remove('hidden');
+            };
+            
+            const onError = () => {
+                showError('This page cannot be displayed in an iframe. Some websites prevent embedding for security reasons.');
+                iframe.classList.add('hidden');
+            };
+            
+            iframe.onload = onLoad;
+            iframe.onerror = onError;
+            
+            // Handle X-Frame-Options errors
+            setTimeout(() => {
+                try {
+                    iframe.contentDocument;
+                } catch (e) {
+                    onError();
+                }
+            }, 3000);
+            
+            iframe.src = formattedUrl;
+        }
+
+        // Event listeners
+        goBtn.addEventListener('click', () => {
+            const url = urlInput.value.trim();
+            if (url) {
+                loadUrl(url);
+            }
+        });
+
+        urlInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                const url = urlInput.value.trim();
+                if (url) {
+                    loadUrl(url);
+                }
+            }
+        });
+
+        backBtn.addEventListener('click', () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                const url = activeTab.goBack();
+                if (url) {
+                    activeTab.url = url;
+                    urlInput.value = url;
+                    activeTab.iframe.src = url;
+                    updateNavigationButtons();
+                }
+            }
+        });
+
+        forwardBtn.addEventListener('click', () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab) {
+                const url = activeTab.goForward();
+                if (url) {
+                    activeTab.url = url;
+                    urlInput.value = url;
+                    activeTab.iframe.src = url;
+                    updateNavigationButtons();
+                }
+            }
+        });
+
+        refreshBtn.addEventListener('click', () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab && activeTab.url) {
+                loadUrl(activeTab.url);
+            }
+        });
+
+        retryBtn.addEventListener('click', () => {
+            const activeTab = tabs.find(t => t.id === activeTabId);
+            if (activeTab && activeTab.url) {
+                loadUrl(activeTab.url);
+            }
+        });
+
+        newTabBtn.addEventListener('click', () => {
+            createNewTab();
+        });
+
+        // Example URL handlers
+        document.querySelectorAll('.example-url').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const url = e.target.dataset.url;
+                urlInput.value = url;
+                loadUrl(url);
+            });
+        });
+
+        // Initialize first tab
+        createNewTab();
     </script>
 </body>
 </html>
